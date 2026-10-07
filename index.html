@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#073b4c" />
+    <title>Ride the Monsoon: Voyage Across the Indian Ocean</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark">✦</span><div><p>Indian Ocean, c. 1325 · <span id="levelLabel">Level 5 · The Monsoon Voyage</span></p><h1>Ride the Monsoon</h1></div></div>
+        <div class="wind-readout" aria-live="polite"><span class="wind-arrow" id="windArrow">→</span><div><strong id="windName">Northeast monsoon</strong><small id="windDetail">Favorable across the sea</small></div></div>
+        <div class="top-actions">
+          <button class="icon-button" id="logButton" aria-label="Open travel log" title="Travel log">☷</button>
+          <button class="icon-button" id="muteButton" aria-label="Mute sound" title="Mute sound">♪</button>
+          <button class="text-button" id="presentationButton">Teacher / Presentation Mode</button>
+          <button class="icon-button" id="restartButton" aria-label="Restart voyage" title="Restart voyage">↻</button>
+        </div>
+      </header>
+
+      <section class="stat-bar" aria-label="Voyage status">
+        <div><span>Hull</span><strong id="hullValue">100%</strong><i><b id="hullBar"></b></i></div>
+        <div><span>Supplies</span><strong id="suppliesValue">150</strong><i><b id="suppliesBar"></b></i></div>
+        <div><span>Coins</span><strong id="moneyValue">72</strong><i><b id="moneyBar"></b></i></div>
+        <div><span>Trust</span><strong id="trustValue">50</strong><i><b id="trustBar"></b></i></div>
+        <div class="progress-stat"><span>Voyage</span><strong id="progressValue">Prepare</strong><i><b id="progressBar"></b></i></div>
+      </section>
+
+      <section class="ocean-stage">
+        <canvas id="oceanCanvas" aria-label="Top-down Indian Ocean sailing map. Use A and D or arrow keys to steer. Use W and S to adjust sails."></canvas>
+        <div class="storm-warning" id="stormWarning">Storm front ahead<br /><small>Choose a response</small></div>
+        <div class="pirate-warning" id="pirateWarning"><span id="pirateAlert">⚠ PIRATES APPROACHING!</span><strong id="pirateStatus">Unknown vessel closing</strong><small id="pirateCountdown">Keep sailing · the dhow is closing</small></div>
+        <aside class="pirate-hud" id="pirateHud" aria-live="polite"><span>⚔ Pirate dhow</span><strong id="pirateDistance">Distance --</strong><small id="pirateDirection">Status: approaching</small><b id="pirateTimer"></b></aside>
+        <div class="sailing-hud">
+          <div><span>Heading</span><strong id="headingValue">E 090°</strong></div>
+          <div><span>Wind effect</span><strong id="windEffectValue">TAILWIND</strong></div>
+          <div><span>Sail</span><strong id="sailValue">55%</strong></div>
+          <div><span>Speed</span><strong id="speedValue">0.0 kn</strong></div>
+          <div><span>Remaining</span><strong id="distanceValue">48.0k</strong></div>
+          <div><span>ETA</span><strong id="timeValue">--:--</strong></div>
+          <div class="hazard-stat"><span>Hazard</span><strong id="hazardValue">Calm</strong></div>
+          <div><span>Efficiency</span><strong id="efficiencyValue">--</strong></div>
+        </div>
+        <div class="objective-card"><span>Current objective</span><strong id="objectiveText">Meet the harbor master in Kilwa.</strong><small id="objectiveHint">Decisions have consequences. Watch wind, supplies, and hull.</small></div>
+        <div class="control-hint"><kbd>A</kbd><kbd>D</kbd> steer <span></span><kbd>W</kbd><kbd>S</kbd> sails <span></span><kbd>Space</kbd> brace <span></span><kbd>P</kbd> pause <span></span><kbd>M</kbd> map</div>
+        <div class="pause-indicator" id="pauseIndicator" aria-live="polite"><span>Voyage paused</span><strong>The ship is holding position</strong><button id="resumeButton" type="button">Resume voyage</button><small>Press P or click Resume</small></div>
+        <details class="developer-tools" id="developerConsole"><summary><span class="console-prompt">&gt;_</span> Developer Console</summary><div class="console-output" id="developerConsoleOutput" aria-live="polite">SYSTEM READY\nVOYAGE: PREPARE\nPIRATE: INACTIVE</div>
+          <div class="dev-grid">
+            <button type="button" data-dev="spawnPirate">SPAWN PIRATE</button>
+            <button type="button" data-dev="triggerStorm">TRIGGER STORM</button>
+            <button type="button" data-dev="triggerRock">TRIGGER ROCK</button>
+            <button type="button" data-dev="triggerFog">TRIGGER FOG</button>
+            <button type="button" data-dev="triggerCultural">TRIGGER CULTURAL EVENT</button>
+            <button type="button" data-dev="setHull">SET HULL 50%</button>
+            <button type="button" data-dev="setSupplies">SET SUPPLIES 20</button>
+            <button type="button" data-dev="setCoins">SET COINS 500</button>
+            <button type="button" data-dev="setCargo">SET CARGO FULL</button>
+            <button type="button" data-dev="autoHelm">AUTO-HELM (TEST)</button>
+            <button type="button" data-dev="skipToPort">SKIP TO PORT</button>
+          </div>
+          <small class="dev-hint">Add <code>?dev</code> to the page URL, or delete the Developer Console element, to hide these controls for a presentation.</small>
+        </details>
+      </section>
+
+      <aside class="map-panel" id="mapPanel" aria-label="Networks of Exchange route chart">
+        <div class="panel-heading"><span>Networks of Exchange · c. 1325</span><button class="close-button" id="mapClose" aria-label="Close route chart">×</button></div>
+        <div class="chart-wrap">
+          <svg class="world-chart" viewBox="0 0 640 420" role="img" aria-labelledby="chartTitle chartDesc" preserveAspectRatio="xMidYMid meet">
+            <title id="chartTitle">Trade networks of Afro-Eurasia around 1325 CE</title>
+            <desc id="chartDesc">A chart showing three exchange networks: the maritime Indian Ocean route from Kilwa on the East African coast to Calicut in India and onward to Southeast Asia; the overland Silk Roads crossing Central Asia and Persia to the Mediterranean; and the Trans-Saharan caravan routes from West Africa across the desert to North Africa and Egypt.</desc>
+            <defs>
+              <linearGradient id="seaFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#0d4f63" /><stop offset="1" stop-color="#062c3b" />
+              </linearGradient>
+              <linearGradient id="landFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#d9c79a" /><stop offset="1" stop-color="#bda87c" />
+              </linearGradient>
+              <pattern id="sands" width="8" height="8" patternUnits="userSpaceOnUse">
+                <rect width="8" height="8" fill="#e3d3a6" />
+                <circle cx="2" cy="2" r=".7" fill="#c9b283" /><circle cx="6" cy="5" r=".6" fill="#c9b283" />
+              </pattern>
+            </defs>
+            <rect width="640" height="420" fill="url(#seaFill)" />
+
+            <g class="chart-land" fill="url(#landFill)">
+              <path d="M0 250 L74 232 L128 244 L166 268 L188 300 L176 340 L150 386 L96 420 L0 420 Z" />
+              <path d="M150 196 L206 168 L262 176 L292 196 L300 236 L268 258 L214 252 L176 232 Z" />
+              <path d="M300 214 L344 196 L392 214 L412 250 L400 292 L356 306 L318 288 L296 254 Z" />
+              <path d="M392 176 L452 158 L520 166 L566 186 L604 214 L640 226 L640 292 L586 300 L534 286 L482 292 L428 268 L400 222 Z" />
+              <path d="M604 0 L640 0 L640 74 L622 84 L612 46 Z" />
+              <path d="M96 0 L140 0 L150 34 L128 60 L104 44 Z" />
+            </g>
+            <path class="chart-desert" d="M28 300 L150 300 L196 322 L150 372 L52 372 Z" fill="url(#sands)" />
+
+            <g class="chart-routes" fill="none" stroke-linecap="round">
+              <path class="route route-silk" d="M604 40 L520 92 L470 130 L430 176 L352 214 L300 214 L250 190 L206 168 L150 150 L96 128" />
+              <path class="route route-saharan" d="M60 236 L96 300 L150 336 L214 320 L268 296 L318 288" />
+              <path class="route route-ocean" d="M232 246 L300 268 L392 300 L470 320 L560 330 L620 322" />
+            </g>
+
+            <g class="chart-labels">
+              <text class="route-name route-name-silk" x="560" y="66">Silk Roads</text>
+              <text class="route-name route-name-saharan" x="40" y="392">Trans-Saharan</text>
+              <text class="route-name route-name-ocean" x="418" y="356">Indian Ocean route</text>
+              <text class="sea-name" x="360" y="404">INDIAN OCEAN</text>
+              <text class="desert-name" x="70" y="316">SAHARA</text>
+            </g>
+
+            <g class="chart-ports">
+              <g class="port port-home"><circle cx="232" cy="246" r="5" /><text x="212" y="234">Kilwa</text></g>
+              <g class="port port-goal"><circle cx="470" cy="320" r="5" /><text x="482" y="324">Calicut</text></g>
+              <g class="port"><circle cx="196" cy="240" r="3" /><text x="158" y="234">Mogadishu</text></g>
+              <g class="port"><circle cx="286" cy="268" r="3" /><text x="252" y="288">Aden</text></g>
+              <g class="port"><circle cx="340" cy="290" r="3" /><text x="316" y="308">Muscat</text></g>
+              <g class="port"><circle cx="404" cy="306" r="3" /><text x="376" y="300">Hormuz</text></g>
+              <g class="port"><circle cx="560" cy="330" r="3" /><text x="546" y="348">Srivijaya</text></g>
+              <g class="port"><circle cx="620" cy="322" r="3" /><text x="592" y="310">Malacca</text></g>
+              <g class="port"><circle cx="604" cy="40" r="3" /><text x="566" y="30">Quanzhou</text></g>
+              <g class="port"><circle cx="96" cy="128" r="3" /><text x="70" y="120">Genoa</text></g>
+              <g class="port"><circle cx="318" cy="288" r="3" /><text x="300" y="266">Alexandria</text></g>
+              <g class="port"><circle cx="112" cy="322" r="3" /><text x="88" y="344">Timbuktu</text></g>
+            </g>
+
+            <g class="chart-player" id="chartPlayer" transform="translate(232,246)">
+              <circle r="15" class="player-halo" />
+              <path d="M0 -8 L5 6 L0 3 L-5 6 Z" class="player-arrow" />
+            </g>
+
+            <g class="chart-compass" transform="translate(596,382)">
+              <circle r="21" /><path d="M0 -17 L4 0 L0 17 L-4 0 Z" class="needle" />
+              <text x="0" y="-24">N</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="network-legend" id="networkLegend">
+          <button class="legend-item is-active" data-network="indian-ocean"><span class="legend-swatch swatch-ocean"></span><b>Indian Ocean</b><em>Maritime · monsoon, reefs, storms</em></button>
+          <button class="legend-item" data-network="silk-roads"><span class="legend-swatch swatch-silk"></span><b>Silk Roads</b><em>Overland · mountains, tribute</em></button>
+          <button class="legend-item" data-network="trans-saharan"><span class="legend-swatch swatch-saharan"></span><b>Trans-Saharan</b><em>Desert · water distance</em></button>
+        </div>
+        <div class="network-detail" id="networkDetail"></div>
+
+        <div class="map-wind-readout"><span id="mapWindArrow">➜</span><strong id="mapWindDirection">Wind toward E</strong><small id="mapWindEffect">Tailwind on eastbound route</small></div>
+        <p class="map-route-info" id="mapRouteInfo">Route: 48,000 units · hazard 100%</p>
+      </aside>
+
+      
+
+      <div class="toast" id="toast" role="status"></div>
+      <aside class="lesson-card" id="lessonCard" aria-live="polite" aria-hidden="true">
+        <p>Historical lesson</p>
+        <span id="lessonText"></span>
+      </aside>
+      <div class="modal-backdrop hidden" id="modalBackdrop" aria-hidden="true">
+        <section class="story-modal" id="storyModal" role="dialog" aria-modal="true" aria-labelledby="decisionTitle">
+          <div class="decision-scene-art" id="decisionSceneArt" data-scene="departure" aria-hidden="true">
+            <span class="scene-sun"></span>
+            <span class="scene-cloud scene-cloud-1"></span>
+            <span class="scene-cloud scene-cloud-2"></span>
+            <span class="scene-land"></span>
+            <span class="scene-waves"></span>
+            <span class="scene-ship"><i class="scene-mast"></i><i class="scene-sail"></i></span>
+            <span class="scene-rain"></span>
+            <span class="scene-caption" id="decisionSceneCaption"></span>
+          </div>
+          <div class="modal-kicker" id="decisionKicker">Decision 1 of 8 · Contextualization</div>
+          <h2 id="decisionTitle">When should we depart?</h2>
+          <div class="decision-speaker">
+            <span class="speaker-silhouette" aria-hidden="true"></span>
+            <span class="speaker-copy"><strong id="decisionSpeakerName">Ship’s log</strong><small id="decisionSpeakerRole">Kilwa Kisiwani, 1325</small></span>
+          </div>
+          <p class="scenario" id="decisionBody"></p>
+          <div class="reasoning-callout" id="reasoningCallout"></div>
+          <div class="choice-list" id="choiceList"></div>
+          <p class="modal-footnote">Each response changes your voyage. There is no luck-only path to success.</p>
+        </section>
+      </div>
+
+      <div class="modal-backdrop hidden" id="marketBackdrop" aria-hidden="true">
+        <section class="market-modal" role="dialog" aria-modal="true" aria-labelledby="marketTitle">
+          <div class="calicut-port-scene" aria-hidden="true"><span class="port-sun"></span><span class="port-roof roof-one"></span><span class="port-roof roof-two"></span><span class="port-dock"></span><span class="port-dhow dhow-one"></span><span class="port-dhow dhow-two"></span><span class="port-traders"></span></div>
+          <div class="market-header"><div><p>Calicut · Kozhikode, India</p><h2 id="marketTitle">The Market of Many Shores</h2></div><span class="market-badge" id="merchantBadge">Merchant trust</span></div>
+          <p id="marketIntro">Your goods are weighed and sold at the Malabar Coast's busiest port. Decide what wealth and cargo to carry west.</p>
+          <div class="market-stats"><span>Coins <b id="marketMoney">72</b></span><span>Hold <b id="marketCargo">0 / 6</b></span><span>Value <b id="marketValue">0</b></span></div>
+          <p class="trade-summary" id="tradeSummary" aria-live="polite"></p>
+          <div class="goods-grid" id="goodsGrid"></div>
+          <button class="primary-button" id="leaveMarketButton" disabled>Sell all goods to return</button>
+        </section>
+      </div>
+
+      <div class="modal-backdrop hidden" id="logBackdrop" aria-hidden="true">
+        <section class="log-modal" role="dialog" aria-modal="true" aria-labelledby="logTitle">
+          <div class="panel-heading"><div><p>Navigator’s journal</p><h2 id="logTitle">Voyage Journal</h2></div><button class="close-button" data-close="logBackdrop" aria-label="Close journal">×</button></div>
+          <div class="journal-scroll">
+            <div id="journalEntries" class="log-entries"><p class="empty-log">Your journal fills as you make decisions.</p></div>
+            <div class="journal-learned" id="journalLearnMore"></div>
+            <h4 class="journal-subhead">Decision record</h4>
+            <div id="logEntries" class="log-entries"><p class="empty-log">Your decisions will be recorded here.</p></div>
+          </div>
+          <div class="log-footer"><span id="journalCount">0 topics recorded</span><strong id="skillsUsed">Not yet recorded</strong></div>
+        </section>
+      </div>
+
+      <div class="modal-backdrop hidden" id="presentationBackdrop" aria-hidden="true">
+        <section class="presentation-modal" role="dialog" aria-modal="true" aria-labelledby="presentationTitle">
+          <div class="panel-heading"><div><p>Presentation companion</p><h2 id="presentationTitle">How this game meets the project</h2></div><button class="close-button" data-close="presentationBackdrop" aria-label="Close presentation mode">×</button></div>
+          <div class="teacher-scroll">
+            <section class="teacher-block objective-block">
+              <h3>Project objective</h3>
+              <p class="standard-code">AERO 2.12.b</p>
+              <p>Analyze the causes and effects of events and developments in past eras, including the growth of trade routes and the spread of ideas, religions, cultures, and other developments.</p>
+            </section>
+
+            <section class="teacher-block">
+              <h3>How the game teaches it</h3>
+              <p>Cause and effect is the game’s core mechanic rather than a quiz topic. Monsoon winds cause changes in sailing conditions, which change travel time and store use, which change whether a crew can trade and return. A decision made in the first minute is still shaping the last leg of the voyage, and the ending report names those links explicitly.</p>
+              <ul class="teacher-chain">
+                <li><b>Cause:</b> seasonal wind reversal, reef strike, storm front, illness at a connected port.</li>
+                <li><b>Development:</b> faster or slower passage, hull damage, closed market window, lost crew time.</li>
+                <li><b>Your decision:</b> three historically grounded responses, never labelled correct or wrong.</li>
+                <li><b>Effect:</b> immediate resources and route change.</li>
+                <li><b>Future consequence:</b> the same flag changes a later hazard, price, or survival roll.</li>
+              </ul>
+            </section>
+
+            <section class="teacher-block">
+              <h3>Networks of exchange used</h3>
+              <ul class="noe-aspects" id="teacherNoeAspects"></ul>
+              <div class="noe-grid" id="teacherNetworks"></div>
+            </section>
+
+            <section class="teacher-block">
+              <h3>Historical reasoning used</h3>
+              <div class="reasoning-grid">
+                <article><h4>Causation</h4><p>Departure timing, navigation tools, the rock repair, storm response, and paid protection each cause a later physical outcome.</p></article>
+                <article><h4>Comparison</h4><p>The route chart compares Indian Ocean, Silk Road, and Trans-Saharan networks by environment, goods, and range before the player picks a line.</p></article>
+                <article><h4>Contextualization</h4><p>Every decision is framed by season, hull condition, stores, and port politics rather than by an abstract rule.</p></article>
+                <article><h4>Continuity and change</h4><p>The ending compares the ship that left Kilwa with the ship that returned while noting the unchanged need to trade.</p></article>
+              </div>
+            </section>
+
+            <section class="teacher-block">
+              <h3>Multiple perspectives</h3>
+              <div class="perspective-grid" id="teacherPerspectives"></div>
+            </section>
+
+            <section class="teacher-block">
+              <h3>Technology and innovation</h3>
+              <div class="tech-grid" id="teacherTech"></div>
+              <p>Tools are mechanics, not collectibles. Choosing the compass, astrolabe, and lateen sail raises navigation accuracy and shortens the route; a paid pilot widens safe passages; ignoring the wind angle costs control.</p>
+            </section>
+
+            <section class="teacher-block">
+              <h3>Historical legacy</h3>
+              <p>Because these routes stayed connected for centuries, the habits built along them outlived any single voyage. Merchant communities, multilingual ports, shared legal norms for safe harbour, and the movement of faiths, technologies, and crops shaped later economic and cultural ties across Afro-Eurasia. The game makes that legacy playable: the crew you inherit is the crew a real merchant house would have trained, and the knowledge you carry home is the product of the voyage.</p>
+            </section>
+
+            <section class="teacher-block written-block">
+              <h3>Written component</h3>
+              <div class="written">
+                <h4>Networks of Exchange in the game</h4>
+                <p>The project centres on the Indian Ocean maritime route, and it supports that route with two comparison networks so students can see that exchange systems responded to their environments. The <b>Indian Ocean network</b> is the playable one: monsoon seasonality, reef coasts, and storms set the rhythm of travel, and its recurring goods — pepper, cotton cloth, glazed ceramics, and ivory — move because ports link East Africa, Arabia, and South Asia. The <b>Silk Roads</b> and the <b>Trans-Saharan routes</b> appear on the route chart and in the comparison decision, where a student weighs overland and desert logic against ocean conditions. A second exchange type, <b>cultural diffusion</b>, is modelled through the multilingual port decision, where conduct changes trust and the safety of the return passage. <b>Disease</b> is handled once, at Calicut, and kept non-graphic: a clerk reports illness at another connected port, and the player chooses how much contact to risk.</p>
+
+                <h4>Historical reasoning processes</h4>
+                <p>Four processes are built into play rather than bolted on afterwards. <b>Causation</b> appears in the repair decision that follows a reef strike and in the storm and protection responses, where an immediate resource change causes a measurable later effect. <b>Comparison</b> drives the pre-voyage route-planning decision that sets the player against the three networks and asks which environmental logic transfers to open water. <b>Contextualization</b> frames the departure and return-timing choices inside season, hull condition, and market politics. <b>Continuity and change</b> closes the game with a side-by-side comparison of the ship that left Kilwa and the ship that returned.</p>
+
+                <h4>Multiple interpretations and perspectives</h4>
+                <p>The crew does not hold one voice. The merchant wants margin, the captain wants a sound hull, the navigator wants a fair wind and a clear line, and the Calicut trader wants a quick, honest exchange. Each is represented as a speaker whose priorities conflict, so the student must decide whose priority to serve. The voyage report then asks which framework produced the strongest outcome, which keeps interpretation open rather than awarding a single answer.</p>
+
+                <h4>Technology, innovation, and legacy</h4>
+                <p>Period technologies change the simulation directly: the magnetic compass and mariner’s astrolabe raise navigational accuracy, the lateen sail lets a ship work close to the wind, and a coastal pilot widens safe passages at the cost of distance. The long-term legacy of these networks is stated at the end: sustained connection produced merchant diasporas, multilingual ports, shared rules about safe harbour, and the spread of faiths, technologies, and crops that linked Afro-Eurasia long after the medieval period. Each of these is traceable to the source list below.</p>
+              </div>
+            </section>
+
+            <section class="teacher-block">
+              <h3>Works cited</h3>
+              <ol class="source-list" id="teacherSources"></ol>
+            </section>
+          </div>
+        </section>
+      </div>
+
+      <div class="modal-backdrop howto-backdrop hidden" id="howToBackdrop" aria-hidden="true">
+        <section class="howto-modal" role="dialog" aria-modal="true" aria-labelledby="howToTitle">
+          <div class="panel-heading"><div><p>Before you sail</p><h2 id="howToTitle">How to play</h2></div><button class="close-button" data-close="howToBackdrop" aria-label="Close how to play">×</button></div>
+          <div class="howto-grid">
+            <section class="howto-card" id="howToControls">
+              <h3><span class="howto-glyph">☷</span>Setup &amp; controls</h3>
+              <p><b>Setup:</b> you are the merchant-sailor of a small ship out of Kilwa Kisiwani, east Africa, in 1325 CE. Your crew, hull, stores, hold, and reputation are already set. You make one complete crossing there and back.</p>
+              <ul class="howto-keys">
+                <li><span class="howto-keys-row"><kbd>A</kbd><kbd>D</kbd></span><span>Steer port or starboard</span></li>
+                <li><span class="howto-keys-row"><kbd>W</kbd><kbd>S</kbd></span><span>Reef or fill the lateen sails</span></li>
+                <li><span class="howto-keys-row"><kbd>Space</kbd></span><span>Brace through rough water</span></li>
+                <li><span class="howto-keys-row"><kbd>M</kbd></span><span>Open the route chart</span></li>
+                <li><span class="howto-keys-row"><kbd>P</kbd></span><span>Pause · <kbd>J</kbd> journal</span></li>
+                <li><span class="howto-keys-row">Mouse</span><span>Click the sea to steer there</span></li>
+              </ul>
+            </section>
+            <section class="howto-card" id="howToSurvival">
+              <h3><span class="howto-glyph">⚓</span>Turn flow &amp; resources</h3>
+              <p><b>Each turn of play:</b> sail → read the sea → meet a decision → pay its cost → see its consequence later.</p>
+              <ul class="howto-tips">
+                <li><b>Hull</b><span>Damage slows the ship and makes every later hit worse. Repairs cost stores.</span></li>
+                <li><b>Supplies</b><span>Food and water. Spent on repairs, bribes, and delays. Empty stores end the voyage.</span></li>
+                <li><b>Coins</b><span>Buys repairs, protection, and return cargo at Calicut.</span></li>
+                <li><b>Cargo</b><span>Six hold spaces. Weight slows you; theft and damage destroy value.</span></li>
+                <li><b>Trust</b><span>Built by fair dealing at ports. High trust unlocks better prices and safer routes.</span></li>
+                <li><b>Wind</b><span>Sail with the arrow to gain speed; against it you lose ground. Seasons reverse.</span></li>
+              </ul>
+            </section>
+            <section class="howto-card" id="howToReasoning">
+              <h3><span class="howto-glyph">✦</span>Decisions &amp; reasoning</h3>
+              <p><b>Every decision gives three responses</b> and never tells you which is best. Each changes the route, the stores, the hull, or the relationships you carry home. A good response can still fail if the ship is already damaged; that is cause and effect, not randomness.</p>
+              <ul class="howto-tips">
+                <li><b>Cause → effect</b><span>Your earlier choices are recorded and reapplied later.</span></li>
+                <li><b>Comparison</b><span>Compare ocean, Silk Road, and desert networks on the chart.</span></li>
+                <li><b>Contextualization</b><span>Judge each choice against season, hull, stores, and politics.</span></li>
+                <li><b>Continuity</b><span>The ending compares who left Kilwa with who came back.</span></li>
+              </ul>
+            </section>
+            <section class="howto-card howto-history" id="howToHistory">
+              <h3><span class="howto-glyph">✦</span>Historical context</h3>
+              <p>Around 1325, merchants of the Swahili coast and the Malabar shore timed their crossings to the reversing monsoon. Crews read the sky, the stars, and a magnetic needle, and traded in ports where several languages, faiths, and currencies met.</p>
+              <p>The same connected routes that carried pepper and cloth also carried faiths, technologies, and — as you will see at Calicut — illness.</p>
+            </section>
+            <section class="howto-card" id="howToWinning">
+              <h3><span class="howto-glyph">✧</span>Winning &amp; endings</h3>
+              <p><b>There is no score for money alone.</b> Three endings are possible, and the ending report explains which chain of causes produced yours.</p>
+              <ul class="howto-tips">
+                <li><b>Successful expedition</b><span>Reached Calicut, completed the return, sound hull, real profit, sound decisions.</span></li>
+                <li><b>Partial success</b><span>Completed the voyage but with heavy losses, damage, or risky choices.</span></li>
+                <li><b>Failed expedition</b><span>Wrecked, ran out of stores, or never reached Calicut.</span></li>
+              </ul>
+            </section>
+          </div>
+          <div class="howto-actions"><button class="secondary-button" data-close="howToBackdrop">Back to the harbor</button></div>
+        </section>
+      </div>
+
+      <div class="modal-backdrop intro-backdrop hidden" id="introBackdrop" aria-hidden="true">
+        <section class="intro-modal" role="dialog" aria-modal="true" aria-labelledby="introTitle">
+          <p class="eyebrow">Prologue · the turning of the season</p>
+          <h2 id="introTitle">Before the sails go up</h2>
+          <ol class="intro-lines">
+            <li>The year is 1325.</li>
+            <li>You are a merchant-sailor preparing to cross the Indian Ocean.</li>
+            <li>The monsoon is turning, and it shapes every mile of the voyage.</li>
+          </ol>
+          <div class="intro-actions">
+            <button class="primary-button" id="introContinueButton" type="button">Continue</button>
+            <button class="ghost-button" id="introSkipButton" type="button">Skip</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="modal-backdrop hidden" id="endingBackdrop" aria-hidden="true" data-outcome="success">
+        <section class="ending-modal" role="dialog" aria-modal="true" aria-labelledby="endingTitle">
+          <div class="ending-banner" id="endingBanner" aria-hidden="true"><span class="banner-sun"></span><span class="banner-hills"></span><span class="banner-sea"></span><span class="banner-ship"><i class="banner-mast"></i><i class="banner-sail"></i></span></div>
+          <div class="ending-seal" id="endingSeal">✦</div><p id="endingLabel">Voyage complete</p><h2 id="endingTitle">Monsoon Master</h2><p id="endingBody"></p>
+          <div class="final-stats" id="finalStats"></div>
+          <div class="ending-scroll">
+            <div class="continuity-report" id="continuityReport"></div>
+            <div class="final-report" id="finalReport"></div>
+          </div>
+          <div class="reflection"><h3>Reflect like a historian</h3><label>How did the monsoon winds influence your decisions?<textarea placeholder="Use an example from your voyage."></textarea></label><label>What caused your voyage to succeed or struggle, and what would you change next time?<textarea placeholder="Connect a decision to an outcome."></textarea></label></div>
+          <div class="ending-actions"><button class="secondary-button" id="endingLogButton">View decision log</button><button class="primary-button" id="playAgainButton">Sail again</button></div>
+        </section>
+      </div>
+
+      <div class="modal-backdrop" id="startBackdrop">
+        <div class="start-scene" aria-hidden="true">
+          <span class="start-sun"></span>
+          <span class="start-cloud start-cloud-1"></span>
+          <span class="start-cloud start-cloud-2"></span>
+          <span class="start-sea"><i class="start-swell swell-1"></i><i class="start-swell swell-2"></i><i class="start-swell swell-3"></i></span>
+          <span class="start-gull"></span>
+        </div>
+        <section class="start-modal" role="dialog" aria-modal="true" aria-labelledby="startTitle">
+          <p class="eyebrow">A historical sailing adventure · 1200–1450 CE</p><h2 id="startTitle">Ride the Monsoon</h2><p>You are a merchant-sailor leaving Kilwa Kisiwani for Calicut. Follow the monsoon, avoid reefs, touch the Calicut coast to arrive, trade, and then sail west back to Kilwa.</p>
+          <div class="start-features"><span>Level 5 · Full voyage</span><span>8 historical decisions</span><span>Disaster survival</span><span>Trade both ways</span></div>
+          <p class="voyage-brief">A single full-length passage through the hardest route: sail from Kilwa to Calicut, sell your outbound cargo, buy for the return, and bring the ship home.</p>
+          <button class="primary-button" id="startButton">Begin voyage</button>
+          <div class="start-secondary" role="group" aria-label="Reference material">
+            <button class="link-button" type="button" id="startHowToButton" data-open="howToBackdrop" data-focus="howToControls" aria-haspopup="dialog" aria-controls="howToBackdrop">How to play</button>
+            <button class="link-button" type="button" id="startContextButton" data-open="howToBackdrop" data-focus="howToHistory" aria-haspopup="dialog" aria-controls="howToBackdrop">Historical context</button>
+            <button class="link-button" type="button" id="startTeacherButton" data-open="presentationBackdrop" aria-haspopup="dialog" aria-controls="presentationBackdrop">Teacher mode</button>
+          </div>
+          <small>One complete Level 5 voyage, designed for about 15 minutes. Keyboard: A/D steer · W/S sails · Space brace · M map · P pause</small>
+        </section>
+      </div>
+    </main>
+    <div class="scene-transition wave-transition" id="sceneTransition" aria-hidden="true"><span class="transition-waves" aria-hidden="true"></span></div>
+    <script src="js/data.js"></script>
+    <script src="js/game.js"></script>
+  </body>
+</html>
